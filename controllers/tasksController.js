@@ -1,6 +1,7 @@
 const Task = require("../models/taskModel");
 const asyncWrapper = require("../middleware/async");
 const { createCustomError } = require("../errors/custom-error");
+const generateRandomId = require("../models/randomID");
 
 const getAllTasks = asyncWrapper(async (req, res) => {
   const tasks = await Task.find({});
@@ -8,13 +9,18 @@ const getAllTasks = asyncWrapper(async (req, res) => {
 });
 
 const createTask = asyncWrapper(async (req, res) => {
-  const task = await Task.create(req.body);
+  const { name, complated } = req.body;
+  const task = await Task.create({
+    taskId: generateRandomId(),
+    name,
+    complated,
+  });
   res.status(201).send({ task });
 });
 
 const getTask = asyncWrapper(async (req, res) => {
   const { id: taskID } = req.params;
-  const task = await Task.findOne({ _id: taskID });
+  const task = await Task.findOne({ taskId: taskID });
   if (!task) {
     return next(createCustomError(`No task with id: ${taskID}`, 404));
   }
@@ -23,7 +29,7 @@ const getTask = asyncWrapper(async (req, res) => {
 
 const updateTask = asyncWrapper(async (req, res) => {
   const { id: taskID } = req.params;
-  const task = await Task.findOneAndUpdate({ _id: taskID }, req.body, {
+  const task = await Task.findOneAndUpdate({ taskId: taskID }, req.body, {
     new: true,
     runValidators: true,
   });
@@ -35,7 +41,7 @@ const updateTask = asyncWrapper(async (req, res) => {
 
 const deleteTask = asyncWrapper(async (req, res) => {
   const { id: taskID } = req.params;
-  const task = await Task.findOneAndDelete({ _id: taskID });
+  const task = await Task.findOneAndDelete({ taskId: taskID });
   if (!task) {
     return next(createCustomError(`No task with id: ${taskID}`, 404));
   }
